@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kubewatch-ingress
+spec:
+  rules:
+    - host: kubewatch.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kubewatch-web
+                port:
+                  number: 8000

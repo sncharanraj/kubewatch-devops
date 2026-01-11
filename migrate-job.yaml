@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kubewatch-migrate
+spec:
+  template:
+    spec:
+      containers:
+        - name: migrate
+          image: sncharanraj/kubewatch-web:v1
+          command: ["python", "manage.py", "migrate", "--noinput"]
+          env:
+            - name: POSTGRES_HOST
+              value: "kubewatch-db"
+            - name: POSTGRES_DB
+              value: "kubewatch"
+            - name: POSTGRES_USER
+              value: "kubewatch"
+            - name: POSTGRES_PASSWORD
+              value: "kubewatch"
+      restartPolicy: OnFailure

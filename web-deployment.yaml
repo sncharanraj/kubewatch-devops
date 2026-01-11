@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubewatch-web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kubewatch-web
+  template:
+    metadata:
+      labels:
+        app: kubewatch-web
+    spec:
+      containers:
+        - name: web
+          image: sncharanraj/kubewatch-web:v1
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /health/
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /health/
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          env:
+            - name: POSTGRES_HOST
+              value: "kubewatch-db"
+            - name: POSTGRES_DB
+              value: "kubewatch"
+            - name: POSTGRES_USER
+              value: "kubewatch"
+            - name: POSTGRES_PASSWORD
+              value: "kubewatch"
+          envFrom:
+            - configMapRef:
+                name: kubewatch-config
+            - secretRef:
+                name: kubewatch-secret
+

@@ -1,0 +1,19 @@
+route:
+  receiver: "slack-notifications"
+  group_by: ['alertname', 'severity']
+  group_wait: 30s
+  repeat_interval: 4h
+
+receivers:
+  - name: "slack-notifications"
+    slack_configs:
+      - api_url_file: /etc/alertmanager/slack_webhook_url
+        channel: "#all-devops-workspace"
+        title: "[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }} ({{ .CommonLabels.severity }})"
+        text: >-
+          {{ range .Alerts }}
+          *Summary:* {{ .Annotations.summary }}
+          *Severity:* `{{ .Labels.severity }}`
+          *Instance:* `{{ .Labels.instance }}`
+          *Started:* {{ .StartsAt }}
+          {{ end }}

@@ -1,0 +1,20 @@
+groups:
+- name: django-availability
+  rules:
+  - alert: DjangoDown
+    expr: up{job="django"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Django service is DOWN"
+      description: "Prometheus cannot reach {{ $labels.instance }}"
+
+  - alert: HighErrorRate
+    expr: rate(django_http_responses_total_by_status_total{status="500"}[5m]) > 0
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High 500 error rate"
+      description: "Something is breaking… check logs."

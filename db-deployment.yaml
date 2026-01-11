@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubewatch-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubewatch-db
+  template:
+    metadata:
+      labels:
+        app: kubewatch-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:14
+          env:
+            - name: POSTGRES_DB
+              value: kubewatch
+            - name: POSTGRES_USER
+              value: kubewatch
+            - name: POSTGRES_PASSWORD
+              value: kubewatch
+          envFrom:
+            - configMapRef:
+                name: kubewatch-config
+            - secretRef:
+                name: kubewatch-secret
+          ports:
+            - containerPort: 5432

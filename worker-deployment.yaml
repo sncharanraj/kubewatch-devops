@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubewatch-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubewatch-worker
+  template:
+    metadata:
+      labels:
+        app: kubewatch-worker
+    spec:
+      containers:
+        - name: worker
+          image: sncharanraj/kubewatch-worker:v1
+          command: ["./worker/docker_worker.sh"]
+
+          livenessProbe:
+            exec:
+              command:
+                - bash
+                - -c
+                - pgrep -f worker.py
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            failureThreshold: 3
+
+          readinessProbe:
+            exec:
+              command:
+                - bash
+                - -c
+                - pgrep -f worker.py
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          env:
+            - name: POSTGRES_HOST
+              value: "kubewatch-db"
+            - name: POSTGRES_DB
+              value: "kubewatch"
+            - name: POSTGRES_USER
+              value: "kubewatch"
+            - name: POSTGRES_PASSWORD
+              value: "kubewatch"
+          envFrom:
+            - configMapRef:
+                name: kubewatch-config
+            - secretRef:
+                name: kubewatch-secret
