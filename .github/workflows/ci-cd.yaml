@@ -24,7 +24,7 @@ jobs:
       # 3. Build and push Web image
       - name: Build web image
         run: |
-          docker build -t sncharanraj/kubewatch-web:latest .
+          docker build -f docker/Dockerfile -t sncharanraj/kubewatch-web:latest .
 
       - name: Push web image
         run: |
@@ -33,7 +33,7 @@ jobs:
       # 4. Build and push Worker image
       - name: Build worker image
         run: |
-          docker build -t sncharanraj/kubewatch-worker:latest .
+          docker build -f docker/Dockerfile -t sncharanraj/kubewatch-worker:latest .
 
       - name: Push worker image
         run: |
