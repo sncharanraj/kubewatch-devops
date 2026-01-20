@@ -6,32 +6,68 @@ on:
       - main
 
 jobs:
-  build-and-push:
+  build-push-deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout repository
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 2. Login to Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # 3. Build and push Web image
       - name: Build web image
         run: |
-          docker build -f docker/Dockerfile -t sncharanraj/kubewatch-web:latest .
+          docker build -t sncharanraj/kubewatch-web:latest .
 
       - name: Push web image
         run: |
           docker push sncharanraj/kubewatch-web:latest
 
+      # 4. Build and push Worker image
       - name: Build worker image
         run: |
-          docker build -f docker/Dockerfile -t sncharanraj/kubewatch-worker:latest .
+          docker build -t sncharanraj/kubewatch-worker:latest .
 
       - name: Push worker image
         run: |
           docker push sncharanraj/kubewatch-worker:latest
 
+      # 5. Install kubectl
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.30.0
+
+      # 6. Configure kubectl to talk to your cluster
+      - name: Configure Kubernetes access
+        run: |
+          echo "${{ secrets.K8S_CA }}" | base64 -d > ca.crt
+
+          kubectl config set-cluster kubewatch-cluster \
+            --server=${{ secrets.K8S_SERVER }} \
+            --certificate-authority=ca.crt
+
+          kubectl config set-credentials github-actions \
+            --token=${{ secrets.K8S_TOKEN }}
+
+          kubectl config set-context kubewatch-context \
+            --cluster=kubewatch-cluster \
+            --user=github-actions
+
+          kubectl config use-context kubewatch-context
+
+      # 7. Deploy new images to Kubernetes
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl set image deployment/kubewatch-web web=sncharanraj/kubewatch-web:latest
+          kubectl set image deployment/kubewatch-worker worker=sncharanraj/kubewatch-worker:latest
+
+          kubectl rollout status deployment/kubewatch-web
+          kubectl rollout status deployment/kubewatch-worker
